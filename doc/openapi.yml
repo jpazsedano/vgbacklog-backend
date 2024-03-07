@@ -1,0 +1,376 @@
+openapi: '3.0.0'
+info:
+  title: Backlog backend
+  description: Api for the management of a videogame backlog and collection.
+  version: '1.0.0'
+paths:
+  /user/{username}:
+    get:
+      summary: "Gets info about an user"
+      parameters: 
+        - name: username
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        200:
+          description: Does not return the password, obviously.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserData"
+        401:
+          description: Not logged in
+        404:
+          description: "Not found"
+    post:
+      summary: "Creates a new user"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserData"
+      responses:
+        200:
+          description: User created
+        401:
+          description: Not logged in
+        403:
+          description: Not enough permissions to create users
+        409:
+          description: User or email already exists
+    put:
+      summary: Updates the info about a user
+      responses:
+        200:
+          description: OK
+    delete:
+      summary: "Deletes a user"
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: User deleted
+        401:
+          description: Not logged in
+        403:
+          description: Not enough permissions
+        404:
+          description: User not found
+  /user/login:
+    get:
+      responses:
+        501:
+          description: Not implemented
+    post:
+      summary: "Gets a login token"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserData"
+      responses:
+        200:
+          description: Login ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        400:
+          description: Wrong credentials
+  /user/{user_id}/game/{game_id}:
+    get:
+      summary: Gets the user user card about a game
+      responses:
+        200:
+          description: OK
+    post:
+      summary: Creates a user card about a game
+      responses:
+        200:
+          description: OK
+    put:
+      summary: Updates a user card about a game
+      responses:
+        200:
+          description: OK
+    delete:
+      summary: Deletes a user card about a game
+      responses:
+        200:
+          description: OK
+  /user/{user_id}/game/{game_id}/review:
+    get:
+      summary: Gets a user review about a game
+      responses:
+        200:
+          description: OK
+    post:
+      summary: Creates a user review about a game
+      responses:
+        200:
+          description: OK
+    put:
+      summary: Updates a user review about a game
+      responses:
+        200:
+          description: OK
+    delete:
+      summary: Deletes a user review about a game
+      responses:
+        200:
+          description: OK
+  /user/{user_id}/backlog:
+    get:
+      summary: Gets the backlog events in chronological time from a user
+      responses:
+        200:
+          description: OK
+  /game/{game_id}:
+    get:
+      summary: Returns the global card about a game
+      parameters:
+        - name: game_id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+    post:
+      summary: Creates a card about a game
+      responses:
+        200:
+          description: OK
+    put:
+      summary: Updates a card about a game
+      responses:
+        200:
+          description: OK
+    delete:
+      summary: Deletes a game card
+      parameters:
+        - name: game_id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+  /game/{game_id}/reviews:
+    get:
+      summary: Gets a list of reviews of a game by the users
+      responses:
+        200:
+          description: OK
+  /game/{game_id}/media:
+    get:
+      summary: Gets media about a specific game with an optional user filter
+      responses:
+        200:
+          description: OK
+  /games/list:
+    get:
+      summary: Gets a list of global card games with the given filters
+      responses:
+        200:
+          description: OK
+  /backlog/{event_id}:
+    get:
+      summary: Gets a backlog event in specific
+      responses:
+        200:
+          description: OK
+    post:
+      summary: Creates a new backlog event
+      responses:
+        200:
+          description: OK
+    put:
+      summary: Updates a backlog event
+      responses:
+        200:
+          description: OK
+    delete:
+      summary: Deletes a backlog event
+      responses:
+        200:
+          description: OK
+  /review/{review_id}:
+    get:
+      summary: Gets a specific review
+      responses:
+        200:
+          description: OK
+    post:
+      summary: Creates a new review about a game
+      parameters:
+        - name: game_id
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+    put:
+      summary: Updates a review
+      responses:
+        200:
+          description: OK
+  /media/{media_id}:
+    get:
+      summary: Retrieves a media
+      responses:
+        200:
+          description: OK
+    post:
+      summary: Uploads a media about a game (game_id required)
+      responses:
+        200:
+          description: OK
+    put:
+      summary: Modifies an existing media
+      responses:
+        200:
+          description: OK
+    delete:
+      summary: Deletes a media from the server
+      responses:
+        200:
+         description: OK
+  /platform/{platform_id}:
+    get:
+      responses:
+        200:
+          description: OK
+    post:
+      responses:
+        200:
+          description: OK
+    put:
+      responses:
+        200:
+          description: OK
+    delete:
+      responses:
+        200:
+          description: OK
+components:
+  schemas:
+    GameCard:
+      type: object
+      properties:
+        title:
+          type: string
+        release_date:
+          type: string
+          maxLength: 10
+          format: date
+        platforms:
+          type: array
+          items:
+            $ref: "#/components/schemas/Platform"
+        developer:
+          type: string
+        thumbnail:
+          type: string
+          format: url
+        labels:
+          type: array
+          items:
+            type: string
+        game_media:
+          type: array
+          items:
+            $ref: "#/components/schemas/GameMedia"
+      required: [ title, release_date, platforms, developer ]
+    Platform:
+      type: object
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        banner:
+          type: string
+      required: [ name, company ]
+    GameMedia:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [ image, video, sound ]
+        path:
+          type: string
+          format: url
+        uploader:
+          type: string
+      required: [ type, path, uploader ]
+    UserGameCard:
+      type: object
+      properties:
+        game:
+          $ref: "#/components/schemas/GameCard"
+        state:
+          type: string
+          enum: [ unplayed, unfinished, finished, completed ]
+        score:
+          type: integer
+          minimum: 0
+          maximum: 10
+        having:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+        review:
+          $ref: "#/components/schemas/GameReview"
+    GameReview:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        banner:
+          type: string
+      required: [ title, body ]
+    BacklogEvent:
+      type: object
+      properties:
+        user:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        type:
+          type: string
+        meta:
+          type: object
+          additionalProperties: true 
+    UserData:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        isAdmin:
+          type: boolean
