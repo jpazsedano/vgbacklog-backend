@@ -7,6 +7,8 @@ paths:
   /user/{username}:
     get:
       summary: "Gets info about an user"
+      tags:
+        - User
       parameters: 
         - name: username
           required: true
@@ -15,17 +17,25 @@ paths:
             type: string
       responses:
         200:
-          description: Does not return the password, obviously.
+          description: Returns the user info. Email optional.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserData"
+                $ref: "#/components/schemas/TrimmedUserData"
         401:
           description: Not logged in
         404:
           description: "Not found"
-    post:
-      summary: "Creates a new user"
+    put:
+      summary: Updates the info about a user
+      tags:
+        - User
+      parameters:
+        - name: username
+          required: true
+          in: path
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -34,20 +44,19 @@ paths:
               $ref: "#/components/schemas/UserData"
       responses:
         200:
-          description: User created
+          description: User modified
         401:
           description: Not logged in
         403:
-          description: Not enough permissions to create users
+          description: Forbidden
+        404:
+          description: User not found
         409:
-          description: User or email already exists
-    put:
-      summary: Updates the info about a user
-      responses:
-        200:
-          description: OK
+          description: Unauthorized parameter (you can't admin yourself)
     delete:
       summary: "Deletes a user"
+      tags:
+        - User
       parameters:
         - name: username
           in: path
@@ -60,21 +69,76 @@ paths:
         401:
           description: Not logged in
         403:
-          description: Not enough permissions
+          description: Forbidden
         404:
           description: User not found
+  /user:
+    get:
+      summary: Lists users
+      tags:
+        - User
+      parameters:
+        - name: elems
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: page
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        200:
+          description: Emails optional
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrimmedUserData"
+        401:
+          description: Not logged in
+    post:
+      summary: "Creates a new user"
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserData"
+      responses:
+        200:
+          description: User created
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        409:
+          description: User or email already exists
   /user/login:
     get:
+      tags:
+        - User
       responses:
         501:
           description: Not implemented
     post:
+      tags:
+        - User
       summary: "Gets a login token"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserData"
+              $ref: "#/components/schemas/LoginData"
       responses:
         200:
           description: Login ok
@@ -87,57 +151,173 @@ paths:
                     type: string
         400:
           description: Wrong credentials
-  /user/{user_id}/game/{game_id}:
+  /usercard/{usercard_id}:
     get:
-      summary: Gets the user user card about a game
+      summary: Gets info about an specific user card
+      parameters:
+        - name: usercard_id
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: get_events
+          required: false
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: get_reviews
+          required: false
+          in: query
+          schema:
+            type: boolean
+            default: false
+      tags:
+        - User card
+      responses:
+        200:
+          description: Backlog events and reviews are returned only if asked for
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserGameCard"
+        401:
+          description: Not logged in
+        404:
+          description: Not found
+    put:
+      summary: Updates an specific user card
+      tags:
+        - User card
+      parameters:
+        - name: usercard_id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserGameCardData"
       responses:
         200:
           description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Not found
+    delete:
+      summary: Deletes a specific user card
+      tags:
+        - User card
+      parameters:
+        - name: usercard_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Not found
+  /usercard/:
+    get:
+      summary: Lists user cards
+      tags:
+        - User card
+      parameters:
+        - name: user_id
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: game_id
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: elems
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: page
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: get_events
+          required: false
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: get_reviews
+          required: false
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserGameCard"
+        401:
+          description: Not logged in
+        404:
+          description: user_id or game_id not found
     post:
       summary: Creates a user card about a game
+      tags:
+        - User card
+      requestBody:
+        required: true
+        content:
+          appliation/json:
+            schema:
+              $ref: "#/components/schemas/UserGameCardData"
       responses:
         200:
           description: OK
-    put:
-      summary: Updates a user card about a game
-      responses:
-        200:
-          description: OK
-    delete:
-      summary: Deletes a user card about a game
-      responses:
-        200:
-          description: OK
-  /user/{user_id}/game/{game_id}/review:
-    get:
-      summary: Gets a user review about a game
-      responses:
-        200:
-          description: OK
-    post:
-      summary: Creates a user review about a game
-      responses:
-        200:
-          description: OK
-    put:
-      summary: Updates a user review about a game
-      responses:
-        200:
-          description: OK
-    delete:
-      summary: Deletes a user review about a game
-      responses:
-        200:
-          description: OK
-  /user/{user_id}/backlog:
-    get:
-      summary: Gets the backlog events in chronological time from a user
-      responses:
-        200:
-          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  usercard_id:
+                    type: string
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Reference to game ID not found
+        409:
+          description: You have already created a card for the game.
   /game/{game_id}:
     get:
       summary: Returns the global card about a game
+      tags:
+        - Game cards
       parameters:
         - name: game_id
           required: true
@@ -147,18 +327,43 @@ paths:
       responses:
         200:
           description: OK
-    post:
-      summary: Creates a card about a game
-      responses:
-        200:
-          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameCard"
+        401:
+          description: Not logged in
+        404:
+          description: Not found
     put:
       summary: Updates a card about a game
+      tags:
+        - Game cards
+      parameters:
+        - name: game_id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GameCardData"
       responses:
         200:
           description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Not found
     delete:
       summary: Deletes a game card
+      tags:
+        - Game cards
       parameters:
         - name: game_id
           required: true
@@ -168,53 +373,311 @@ paths:
       responses:
         200:
           description: OK
-  /game/{game_id}/reviews:
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Not found
+  /game:
     get:
-      summary: Gets a list of reviews of a game by the users
+      summary: Gets a list of game cards
+      parameters:
+        - name: elems
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: page
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      tags:
+        - Game cards
       responses:
         200:
           description: OK
-  /game/{game_id}/media:
-    get:
-      summary: Gets media about a specific game with an optional user filter
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GameCard"
+        401:
+          description: Not logged in
+    post:
+      summary: Creates a card about a game
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GameCardData"
+      tags:
+        - Game cards
       responses:
         200:
           description: OK
-  /games/list:
-    get:
-      summary: Gets a list of global card games with the given filters
-      responses:
-        200:
-          description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: platformId not found.
+        409:
+          description: This game for this platform already has a card
   /backlog/{event_id}:
     get:
       summary: Gets a backlog event in specific
+      tags:
+        - Backlog
+      parameters:
+        - name: event_id
+          required: true
+          in: path
+          schema:
+            type: string
       responses:
         200:
           description: OK
-    post:
-      summary: Creates a new backlog event
-      responses:
-        200:
-          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BacklogEvent"
+        401:
+          description: Not logged in
+        404:
+          description: Not found
     put:
       summary: Updates a backlog event
+      tags:
+        - Backlog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BacklogEvent"
+      parameters:
+        - name: event_id
+          required: true
+          in: path
+          schema:
+            type: string
       responses:
         200:
           description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Not found
     delete:
       summary: Deletes a backlog event
+      tags:
+        - Backlog
+      parameters:
+        - name: event_id
+          required: true
+          in: path
+          schema:
+            type: string
       responses:
         200:
           description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Not found
+  /backlog:
+    get:
+      summary: Gets a list of backlog events
+      tags:
+        - Backlog
+      parameters:
+        - name: user_id
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: game_id
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: elems
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: page
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BacklogEvent"
+        401:
+          description: Not logged in
+        404:
+          description: user_id or game_id not found
+    post:
+      summary: Creates a new backlog event
+      tags:
+        - Backlog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BacklogEvent"
+      responses:
+        200:
+          description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Game not found
   /review/{review_id}:
     get:
       summary: Gets a specific review
+      tags:
+        - Reviews
+      parameters:
+        - name: review_id
+          required: true
+          in: path
+          schema:
+            type: string
       responses:
         200:
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameReviewData"
+        401:
+          description: Not logged in
+        404:
+          description: Not found
+    put:
+      summary: Updates a review
+      tags:
+        - Reviews
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GameReview"
+      parameters:
+        - name: review_id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Not found
+    delete:
+      summary: Deletes a review
+      tags:
+        - Reviews
+      parameters:
+        - name: review_id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Not found
+  /review:
+    get:
+      summary: Gets a list of reviews
+      tags:
+        - Reviews
+      parameters:
+        - name: user_id
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: game_id
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: page
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: elems
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GameReview"
+        401:
+          description: Not logged in
+        404:
+          description: User ID or game ID not found
     post:
       summary: Creates a new review about a game
+      tags:
+        - Reviews
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GameReviewData"
       parameters:
         - name: game_id
           required: true
@@ -224,49 +687,254 @@ paths:
       responses:
         200:
           description: OK
-    put:
-      summary: Updates a review
-      responses:
-        200:
-          description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Game not found
   /media/{media_id}:
     get:
       summary: Retrieves a media
+      tags:
+        - Media
+      parameters:
+        - name: media_id
+          required: true
+          in: path
+          schema:
+            type: string
       responses:
         200:
           description: OK
-    post:
-      summary: Uploads a media about a game (game_id required)
-      responses:
-        200:
-          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameMedia"
+        401:
+          description: Not logged in
+        404:
+          description: Not found
     put:
       summary: Modifies an existing media
+      tags:
+        - Media
+      parameters:
+        - name: media_id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GameMediaData"
       responses:
         200:
           description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Not found
     delete:
       summary: Deletes a media from the server
+      tags:
+        - Media
+      parameters:
+        - name: media_id
+          required: true
+          in: path
+          schema:
+            type: string
       responses:
         200:
-         description: OK
+          description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Not found
+  /media:
+    get:
+      summary: Gets a list of media
+      tags:
+        - Media
+      parameters:
+        - name: user_id
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: game_id
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: elems
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GameMedia"
+        401:
+          description: Not logged in
+        404:
+          description: game_id or user_id not found
+    post:
+      summary: Uploads a media about a game
+      tags:
+        - Media
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GameMediaData"
+      responses:
+        200:
+          description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Game not found
   /platform/{platform_id}:
     get:
+      summary: Gets info about a specific platform
+      tags:
+        - Platforms
+      parameters:
+        - name: platform_id
+          required: true
+          in: path
+          schema:
+            type: string
       responses:
         200:
           description: OK
-    post:
-      responses:
-        200:
-          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Platform"
+        401:
+          description: Not logged in
+        404:
+          description: Not found
     put:
+      summary: Modifies info about a platform
+      tags:
+        - Platforms
+      parameters:
+        - name: platform_id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlatformData"
       responses:
         200:
           description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Not found
     delete:
+      summary: Deletes a platform
+      tags:
+        - Platforms
+      parameters:
+        - name: platform_id
+          required: true
+          in: path
+          schema:
+            type: string
       responses:
         200:
           description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        404:
+          description: Not found
+  /platform:
+    get:
+      summary: Gets a list of platforms.
+      parameters:
+        - name: page
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: elems
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      tags:
+        - Platforms
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Platform"
+        401:
+          description: Not logged in
+    post:
+      summary: Creates a new platform
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlatformData"
+      tags:
+        - Platforms
+      responses:
+        200:
+          description: OK
+        401:
+          description: Not logged in
+        403:
+          description: Forbidden
+        409:
+          description: Platform already created
 components:
   schemas:
     GameCard:
@@ -296,7 +964,42 @@ components:
           items:
             $ref: "#/components/schemas/GameMedia"
       required: [ title, release_date, platforms, developer ]
+    GameCardData:
+      type: object
+      properties:
+        title: 
+          type: string
+        release_date:
+          type: string
+          maxLength: 10
+          format: date
+        platformIds:
+          type: array
+          items:
+            type: string
+        developer:
+          type: string
+        thumbnail:
+          type: string
+          format: url
+        labels:
+          type: array
+          items:
+            type: string
+      required: [ title, release_date, platformIds, developer ]
     Platform:
+      type: object
+      properties:
+        platformId:
+          type: string
+        name:
+          type: string
+        company:
+          type: string
+        banner:
+          type: string
+      required: [ name, company ]
+    PlatformData:
       type: object
       properties:
         name:
@@ -312,12 +1015,26 @@ components:
         type:
           type: string
           enum: [ image, video, sound ]
+        gameId:
+          type: string
         path:
           type: string
           format: url
         uploader:
           type: string
       required: [ type, path, uploader ]
+    GameMediaData:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [ image, video, sound ]
+        uploader:
+          type: string
+        gameId:
+          type: string
+        data:
+          type: string
     UserGameCard:
       type: object
       properties:
@@ -334,13 +1051,49 @@ components:
           type: array
           items:
             type: string
-        notes:
+        backlogEvents:
+          type: array
+          items:
+            $ref: "#/components/schemas/BacklogEvent"
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/GameReview"
+    UserGameCardData:
+      type: object
+      properties:
+        gameId:
           type: string
-        review:
-          $ref: "#/components/schemas/GameReview"
+        state:
+          type: string
+          enum: [ unplayed, unfinished, finished, completed ]
+        score:
+          type: integer
+          minimum: 0
+          maximum: 10
+        having:
+          type: array
+          items:
+            type: string
     GameReview:
       type: object
       properties:
+        gameId:
+          type: string
+        userId:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        banner:
+          type: string
+      required: [ title, body ]
+    GameReviewData:
+      type: object
+      properties:
+        gameId:
+          type: string
         title:
           type: string
         body:
@@ -356,6 +1109,8 @@ components:
         timestamp:
           type: string
           format: date-time
+        gameId:
+          type: string
         type:
           type: string
         meta:
@@ -374,3 +1129,21 @@ components:
           format: password
         isAdmin:
           type: boolean
+    TrimmedUserData:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        isAdmin:
+          type: boolean
+    LoginData:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
