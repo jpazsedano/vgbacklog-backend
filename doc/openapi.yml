@@ -1020,6 +1020,8 @@ components:
         path:
           type: string
           format: url
+        footer:
+          type: string
         uploader:
           type: string
       required: [ type, path, uploader ]
@@ -1034,6 +1036,8 @@ components:
         gameId:
           type: string
         data:
+          type: string
+        footer:
           type: string
     UserGameCard:
       type: object
